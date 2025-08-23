@@ -2,7 +2,7 @@
 
 This repository provides a minimal, lightweight Docker-based development environment for Ruby on Rails applications. The goal is to provide a consistent, version-controlled environment that a team of developers can use to work on one or more Rails applications.
 
-The intended workflow is for each developer to clone this repository, start the container, and connect to it with a remote-enabled IDE (like VS Code or Cursor). All application code lives in a `workspace` directory, which is ignored by this repository's version control, preventing any conflicts.
+The intended workflow is for each developer to clone this repository, start the container, and connect to it with a remote-enabled IDE (like VS Code or Cursor). By default, all application code lives in a `./workspace` directory, which is ignored by this repository's version control. This path can be customized via an environment variable.
 
 **Key Features:**
 
@@ -18,7 +18,7 @@ This setup provides a container that acts as a development server. You start it 
 **Step 1: Initial Setup (First time only)**
 
 1.  **Create the workspace directory:**
-    This directory will contain all of your application code. It is ignored by the development environment's Git repository.
+    This directory will contain all of your application code. It is ignored by the development environment's Git repository. By default, it's `./workspace`, but you can customize this (see "Customization" section).
 
     ```bash
     mkdir workspace
@@ -158,13 +158,15 @@ docker-compose exec app rails db:reset
 
 ### Environment Variables
 
-You can customize the environment by editing the `docker-compose.yml` file:
+You can customize the environment by creating a `.env` file in the root of this project or by editing the `docker-compose.yml` file.
 
+- `LOCAL_WORKSPACE_PATH` - **(Recommended: Use `.env` file)** Defines the local path that mounts to the container's `/home/dev/app` directory. It defaults to `./workspace`.
+  - **⚠️ WARNING:** If you override this variable, you **MUST** ensure the path is correct. An incorrect path could target the wrong directory, leading to unintended modifications to your existing projects or files.
 - `RAILS_ENV` - Rails environment (development, test, production)
 
 ### Adding New Services
 
-To add new services (like PostgreSQL, Redis, Elasticsearch, etc.), add them to the `docker-compose.yml` file if needed for your specific project.
+To add new services (like Redis, Elasticsearch, etc.), add them to the `docker-compose.yml` file if needed for your specific project.
 
 ## 📊 Accessing Services
 
@@ -217,7 +219,7 @@ This project is open-source and available under the [MIT License](LICENSE).
 
 ## 📝 Notes
 
-- Your application source code lives in the `./workspace` directory, which is mounted into `/app` in the container.
+- Your application source code lives in the directory defined by `LOCAL_WORKSPACE_PATH` (default: `./workspace`), which is mounted into `/app` in the container.
 - The `workspace` directory is ignored by this repository's `.gitignore` file, allowing your applications to have their own separate Git history.
 - The PostgreSQL data is persisted in a local `./postgres_data` directory, which is also ignored by Git.
 - The container creates a `dev` user with the same UID/GID as your host user to avoid permission issues.
