@@ -1,0 +1,8 @@
+# Ignore environment variables
+.env
+
+# Ignore the directory where application code will live
+/workspace/
+
+# Ignore local database data
+/postgres_data/

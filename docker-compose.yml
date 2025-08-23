@@ -1,0 +1,43 @@
+
+services:
+  # Main Rails application with SQLite
+  app:
+    build:
+      context: .
+      args:
+        UID: ${UID:-1000}
+        GID: ${GID:-1000}
+        # To override without modifying this file, 
+        # set DEFAULT_SHELL in .env e.g. DEFAULT_SHELL=/bin/zsh or 
+        # run 'export DEFAULT_SHELL=/bin/zsh' before running 'docker compose up'
+        DEFAULT_SHELL: ${DEFAULT_SHELL:-/bin/bash} 
+    ports:
+      - "${RAILS_SERVER_PORT:-3000}:3000"  # Rails server
+      - "${MAILCATCHER_PORT:-1080}:1080"  # Mailcatcher web interface
+    volumes:
+      # Mount your source code for live editing
+      - ./workspace:/home/dev/app
+    environment:
+      - "RAILS_ENV=${RAILS_ENV:-development}"
+    depends_on:
+      - postgres
+    stdin_open: true
+    tty: true
+
+  # Set postgresql as a service
+  postgres:
+    image: postgres:16
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
+    environment:
+      - "POSTGRES_USER=${POSTGRES_USER:-postgres}"
+      - "POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-password}"
+      - "POSTGRES_DB=${POSTGRES_DB:-postgres_development}"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
