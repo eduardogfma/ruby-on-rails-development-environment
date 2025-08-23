@@ -36,7 +36,8 @@ services:
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
-      - ./postgres_data:/var/lib/postgresql/data
+      # Mount your postgres data for persistence
+      - ${LOCAL_WORKSPACE_PATH?Please define LOCAL_WORKSPACE_PATH in a .env file}/postgres_data:/var/lib/postgresql/data
     environment:
       - "POSTGRES_USER=${POSTGRES_USER:-postgres}"
       - "POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-password}"
