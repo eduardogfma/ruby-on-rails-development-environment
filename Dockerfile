@@ -4,7 +4,7 @@ ARG DEFAULT_SHELL=/bin/bash
 
 # Install system dependencies following official Rails installation guide
 RUN apt update && \
-    apt install -y curl git build-essential rustc libssl-dev libyaml-dev zlib1g-dev libgmp-dev zsh
+    apt install -y curl git git-flow build-essential rustc libssl-dev libyaml-dev zlib1g-dev libgmp-dev zsh
 
 # Define timezone
 ENV TZ=Europe/Berlin
