@@ -20,7 +20,7 @@ services:
       # e.g. LOCAL_WORKSPACE_PATH=/Users/yourusername/projects/your-project
       # If the variable is set in .env, make sure if it points to the correct path
       # before running 'docker compose up'
-      - ${LOCAL_WORKSPACE_PATH:-./workspace}:/home/dev/app
+      - ${LOCAL_WORKSPACE_PATH?Please define LOCAL_WORKSPACE_PATH in a .env file}:/home/dev/app
     environment:
       - "RAILS_ENV=${RAILS_ENV:-development}"
     depends_on:

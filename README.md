@@ -2,7 +2,7 @@
 
 This repository provides a minimal, lightweight Docker-based development environment for Ruby on Rails applications. The goal is to provide a consistent, version-controlled environment that a team of developers can use to work on one or more Rails applications.
 
-The intended workflow is for each developer to clone this repository, start the container, and connect to it with a remote-enabled IDE (like VS Code or Cursor). By default, all application code lives in a `./workspace` directory, which is ignored by this repository's version control. This path can be customized via an environment variable.
+The intended workflow is for each developer to clone this repository, start the container, and connect to it with a remote-enabled IDE (like VS Code or Cursor). All application code lives in a local directory that you must specify, which is then mounted into the container. This directory is ignored by this repository's version control.
 
 **Key Features:**
 
@@ -13,31 +13,49 @@ The intended workflow is for each developer to clone this repository, start the 
 
 ## 🚀 Quick Start: The Development Workflow
 
-This setup provides a container that acts as a development server. You start it once, connect your IDE, and perform all your work inside the `workspace` directory.
+This setup provides a container that acts as a development server. You start it once, connect your IDE, and perform all your work inside your designated workspace directory.
 
 **Step 1: Initial Setup (First time only)**
 
-1.  **Create the workspace directory:**
-    This directory will contain all of your application code. It is ignored by the development environment's Git repository. By default, it's `./workspace`, but you can customize this (see "Customization" section).
+1.  **Create a `.env` file:**
+    This file is where you will define the path to your local workspace directory. It is crucial for telling Docker where to mount your application code from.
+
+    ```bash
+    touch .env
+    ```
+
+2.  **Define your workspace path:**
+    Open the `.env` file and add the `LOCAL_WORKSPACE_PATH` variable. For a standard setup, you can point it to a `./workspace` directory.
+
+    ```
+    # .env
+    LOCAL_WORKSPACE_PATH=./workspace
+    ```
+
+    **⚠️ WARNING:** You **MUST** ensure this path is correct. An incorrect path could target the wrong directory, leading to unintended modifications to your existing projects or files.
+
+3.  **Create the workspace directory:**
+    This directory will contain all of your application code. Make sure the path matches what you set in your `.env` file.
 
     ```bash
     mkdir workspace
     ```
 
-2.  **Build and start the container:**
-    This command starts the `app` and `postgres` containers in the background.
+4.  **Build and start the container:**
+    This command starts the `app` and `postgres` containers in the background. It includes a safety check to prevent you from accidentally mounting an existing project into a new environment.
 
     ```bash
-    docker-compose up --build # use -d to run silently in the background
+    ./start.sh --build # Pass --build on the first run
+    # Use -d to run silently in the background, e.g., ./start.sh -d
     ```
 
 **Step 2: Daily Workflow**
 
 1.  **Start the container:**
-    If the container is not already running, start it.
+    If the container is not already running, start it using the script.
 
     ```bash
-    docker-compose up # use -d to run silently in the background
+    ./start.sh # Use -d to run silently in the background
     ```
 
 2.  **Connect your IDE to the container:**
@@ -128,7 +146,7 @@ rails test
 
 ### Using `docker-compose exec` (Alternative)
 
-For quick, one-off commands, you can still use `docker-compose exec` from your local machine's terminal without attaching your full IDE:
+For quick, one-off commands, you can still use `docker-compose exec` from your local machine's terminal without attaching your full IDE. However, for starting the services, always use `./start.sh`.
 
 ```bash
 # Run database migrations
@@ -158,11 +176,11 @@ docker-compose exec app rails db:reset
 
 ### Environment Variables
 
-You can customize the environment by creating a `.env` file in the root of this project or by editing the `docker-compose.yml` file.
+You can customize the environment by creating a `.env` file in the root of this project.
 
-- `LOCAL_WORKSPACE_PATH` - **(Recommended: Use `.env` file)** Defines the local path that mounts to the container's `/home/dev/app` directory. It defaults to `./workspace`.
-  - **⚠️ WARNING:** If you override this variable, you **MUST** ensure the path is correct. An incorrect path could target the wrong directory, leading to unintended modifications to your existing projects or files.
-- `RAILS_ENV` - Rails environment (development, test, production)
+- `LOCAL_WORKSPACE_PATH` - **(Required)** Defines the local path that mounts to the container's `/home/dev/app` directory.
+  - **⚠️ WARNING:** You **MUST** ensure the path is correct. An incorrect path could target the wrong directory, leading to unintended modifications to your existing projects or files.
+- `RAILS_ENV` - Rails environment (development, test, production). Defaults to `development`.
 
 ### Adding New Services
 
@@ -177,13 +195,19 @@ To add new services (like Redis, Elasticsearch, etc.), add them to the `docker-c
 
 ### Container Won't Start
 
-```bash
-# View logs
-docker-compose logs app
+- **Check the logs**: If `./start.sh` fails, first check the output in your terminal.
+- **Run `docker-compose` directly**: To bypass the script for debugging, you can try running `docker-compose up` after ensuring your `.env` file is correct.
+- **View Docker Compose logs**:
 
-# Rebuild containers
-docker-compose down && docker-compose up --build -d
-```
+  ```bash
+  docker-compose logs app
+  ```
+
+- **Rebuild containers**:
+
+  ```bash
+  docker-compose down && ./start.sh --build -d
+  ```
 
 ### Database Issues
 
@@ -194,7 +218,7 @@ If you have issues connecting to PostgreSQL, ensure the `postgres` container is 
 docker-compose exec app rails db:drop db:create db:migrate
 
 # Or rebuild everything from scratch
-docker-compose down --volumes && docker-compose up --build -d
+docker-compose down --volumes && ./start.sh --build -d
 ```
 
 ## 🧹 Cleanup
@@ -219,7 +243,7 @@ This project is open-source and available under the [MIT License](LICENSE).
 
 ## 📝 Notes
 
-- Your application source code lives in the directory defined by `LOCAL_WORKSPACE_PATH` (default: `./workspace`), which is mounted into `/app` in the container.
-- The `workspace` directory is ignored by this repository's `.gitignore` file, allowing your applications to have their own separate Git history.
+- Your application source code lives in the directory defined by `LOCAL_WORKSPACE_PATH` in your `.env` file, which is mounted into `/app` in the container.
+- The path pointed to by `LOCAL_WORKSPACE_PATH` (e.g., `./workspace`) is ignored by this repository's `.gitignore` file, allowing your applications to have their own separate Git history.
 - The PostgreSQL data is persisted in a local `./postgres_data` directory, which is also ignored by Git.
 - The container creates a `dev` user with the same UID/GID as your host user to avoid permission issues.
