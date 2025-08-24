@@ -1,0 +1,10 @@
+-- The main database ('leads_gen_template_db') and user ('leadsgen_user') are 
+-- created automatically by the official postgres Docker image based on the
+-- POSTGRES_DB, POSTGRES_USER, and POSTGRES_PASSWORD environment variables
+-- you have defined in your .env file.
+--
+-- This script is for any additional setup. For a typical Rails application, a
+-- test database is also needed. The command below creates the test database
+-- and sets the main application user as the owner.
+
+CREATE DATABASE ${POSTGRES_DB}_test OWNER ${POSTGRES_USER};

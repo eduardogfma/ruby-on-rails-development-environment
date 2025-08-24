@@ -1,8 +1,18 @@
 # Ignore environment variables
-.env
+.env*
+!.env.example
 
 # Ignore the directory where application code will live
 /workspace/
 
 # Ignore local database data
 /postgres_data/
+
+# Ignore postgres init script
+/postgres/init.sql
+
+# Ignore macOS files
+.DS_Store
+
+# Ignore pg_config files
+.pg_config*

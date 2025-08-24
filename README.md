@@ -30,9 +30,17 @@ This setup provides a container that acts as a development server. You start it 
     ```
     # .env
     LOCAL_WORKSPACE_PATH=./workspace
+
+    # Optional: PostgreSQL Database Settings
+    # These are used to initialize the database on the first run.
+    # If you change these after the first run, you must run 'docker compose down -v'
+    # to destroy the old database and apply the new settings.
+    POSTGRES_DB=my_app_development
+    POSTGRES_USER=my_app_user
+    POSTGRES_PASSWORD=changethis
     ```
 
-    **⚠️ WARNING:** You **MUST** ensure this path is correct. An incorrect path could target the wrong directory, leading to unintended modifications to your existing projects or files.
+    **⚠️ WARNING:** You **MUST** ensure `LOCAL_WORKSPACE_PATH` is correct. An incorrect path could target the wrong directory, leading to unintended modifications to your existing projects or files.
 
 3.  **Create the workspace directory:**
     This directory will contain all of your application code. Make sure the path matches what you set in your `.env` file.
@@ -87,19 +95,21 @@ After connecting your IDE to the container, run these commands in the integrated
     default: &default
       adapter: postgresql
       encoding: unicode
-      pool: 5
+      pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
       host: postgres
-      username: postgres
-      password: password
+      username: <%= ENV.fetch("POSTGRES_USER") %>
+      password: <%= ENV.fetch("POSTGRES_PASSWORD") %>
 
     development:
       <<: *default
-      database: my-new-project_development
+      database: <%= ENV.fetch("POSTGRES_DB") %>
 
     test:
       <<: *default
-      database: my-new-project_test
+      database: <%= "#{ENV.fetch("POSTGRES_DB")}_test" %>
     ```
+
+    _**Note:** The `test` database is automatically created for you by the startup script._
 
 3.  **Set up the database and start the server:**
 
@@ -181,6 +191,10 @@ You can customize the environment by creating a `.env` file in the root of this 
 - `LOCAL_WORKSPACE_PATH` - **(Required)** Defines the local path that mounts to the container's `/home/dev/app` directory.
   - **⚠️ WARNING:** You **MUST** ensure the path is correct. An incorrect path could target the wrong directory, leading to unintended modifications to your existing projects or files.
 - `RAILS_ENV` - Rails environment (development, test, production). Defaults to `development`.
+- `POSTGRES_DB` - The name for the main PostgreSQL database. Defaults to `postgres_development`.
+- `POSTGRES_USER` - The user for the PostgreSQL database. Defaults to `postgres`.
+- `POSTGRES_PASSWORD` - The password for the PostgreSQL user. Defaults to `password`.
+- `POSTGRES_PORT` - The external port to map to the PostgreSQL container. Defaults to `5432`.
 
 ### Adding New Services
 
@@ -189,7 +203,7 @@ To add new services (like Redis, Elasticsearch, etc.), add them to the `docker-c
 ## 📊 Accessing Services
 
 - **Rails App**: http://localhost:3000 (after you manually start the server)
-- **PostgreSQL**: Connect with a database client at `localhost:5432` (User: `postgres`, Pass: `password`)
+- **PostgreSQL**: Connect with a database client at `localhost:${POSTGRES_PORT}`. The username and password are the values you have set for `POSTGRES_USER` and `POSTGRES_PASSWORD` in your `.env` file.
 
 ## 🐛 Troubleshooting
 
@@ -211,7 +225,17 @@ To add new services (like Redis, Elasticsearch, etc.), add them to the `docker-c
 
 ### Database Issues
 
-If you have issues connecting to PostgreSQL, ensure the `postgres` container is running: `docker-compose ps`.
+- **Configuration Changed Error**: If you change `POSTGRES_DB` or `POSTGRES_USER` in your `.env` file after the database has already been created, the `./start.sh` script will stop with a "CRITICAL WARNING". This is a safety feature to prevent your application from connecting to a database with the wrong credentials. To apply the new settings, you must first completely destroy the old database and its data, then start the container again.
+
+  ```bash
+  # 1. Destroy the container and its associated volume
+  docker-compose down -v
+
+  # 2. Start fresh with the new settings
+  ./start.sh
+  ```
+
+- **General Connection Problems**: If you have issues connecting to PostgreSQL, ensure the `postgres` container is running: `docker-compose ps`.
 
 ```bash
 # Reset PostgreSQL databases
@@ -245,5 +269,5 @@ This project is open-source and available under the [MIT License](LICENSE).
 
 - Your application source code lives in the directory defined by `LOCAL_WORKSPACE_PATH` in your `.env` file, which is mounted into `/app` in the container.
 - The path pointed to by `LOCAL_WORKSPACE_PATH` (e.g., `./workspace`) is ignored by this repository's `.gitignore` file, allowing your applications to have their own separate Git history.
-- The PostgreSQL data is persisted in a local `./postgres_data` directory, which is also ignored by Git.
+- The PostgreSQL data is persisted in a named Docker volume (`postgres_data`) to ensure data survives between container restarts.
 - The container creates a `dev` user with the same UID/GID as your host user to avoid permission issues.
