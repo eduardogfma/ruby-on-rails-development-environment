@@ -10,7 +10,11 @@ services:
         # To override without modifying this file, 
         # set DEFAULT_SHELL in .env e.g. DEFAULT_SHELL=/bin/zsh or 
         # run 'export DEFAULT_SHELL=/bin/zsh' before running 'docker compose up'
-        DEFAULT_SHELL: ${DEFAULT_SHELL:-/bin/bash} 
+        DEFAULT_SHELL: ${DEFAULT_SHELL:-/bin/bash}
+        # To override without modifying this file, 
+        # set DEFAULT_EDITOR in .env e.g. DEFAULT_EDITOR=vim or
+        # run 'export DEFAULT_EDITOR=nano' before running 'docker compose up'
+        DEFAULT_EDITOR: ${DEFAULT_EDITOR:-nano}
     ports:
       - "${RAILS_SERVER_PORT:-3000}:3000"  # Rails server
       - "${MAILCATCHER_PORT:-1080}:1080"  # Mailcatcher web interface

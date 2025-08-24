@@ -2,9 +2,21 @@ FROM ubuntu:22.04
 
 ARG DEFAULT_SHELL=/bin/bash
 
-# Install system dependencies following official Rails installation guide
+# Install system dependencies following official Rails installation guide as well as some other useful tools
 RUN apt update && \
-    apt install -y curl git git-flow build-essential rustc libssl-dev libyaml-dev zlib1g-dev libgmp-dev zsh
+    apt install -y \
+    zsh \
+    curl \ 
+    git \
+    git-flow \
+    nano \
+    vim \
+    build-essential \
+    rustc \
+    libssl-dev \
+    libyaml-dev \
+    zlib1g-dev \
+    libgmp-dev 
 
 # Define timezone
 ENV TZ=Europe/Berlin
@@ -20,6 +32,11 @@ RUN apt-get update && apt-get install -y sudo && \
 
 # Switch to the new user
 USER dev
+
+# Set editor and visual to nano
+ENV DEFAULT_EDITOR=nano
+ENV VISUAL=$DEFAULT_EDITOR
+
 WORKDIR /home/dev
 
 # Install Mise version manager
